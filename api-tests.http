@@ -1,0 +1,392 @@
+### 星际漂流计划 API 测试
+### 使用 VS Code 的 REST Client 插件运行这些测试
+### 或者复制到 Postman/Insomnia 中使用
+
+@baseUrl = http://localhost:3001
+@contentType = application/json
+
+### ============================================
+### 1. 用户认证测试
+### ============================================
+
+### 1.1 注册新用户
+# @name register
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "username": "test_user_001",
+  "email": "test001@example.com",
+  "password": "Test123456"
+}
+
+### 1.2 注册第二个用户（用于测试）
+# @name register2
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "username": "test_user_002",
+  "email": "test002@example.com",
+  "password": "Test123456"
+}
+
+### 1.3 登录用户
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test001@example.com",
+  "password": "Test123456"
+}
+
+### 1.4 获取当前用户信息
+# @name me
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+### 1.5 刷新 Token
+# @name refresh
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refreshToken": "{{login.response.body.tokens.refreshToken}}"
+}
+
+### 1.6 测试错误：邮箱已存在
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "username": "duplicate_user",
+  "email": "test001@example.com",
+  "password": "Test123456"
+}
+
+### 1.7 测试错误：用户名已存在
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "username": "test_user_001",
+  "email": "another@example.com",
+  "password": "Test123456"
+}
+
+### 1.8 测试错误：密码错误
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test001@example.com",
+  "password": "WrongPassword"
+}
+
+### 1.9 测试错误：用户不存在
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "nonexistent@example.com",
+  "password": "Test123456"
+}
+
+### ============================================
+### 2. 生物创建测试
+### ============================================
+
+### 2.1 创建生物（需要登录）
+# @name createCreature
+POST {{baseUrl}}/api/creatures
+Content-Type: {{contentType}}
+Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+{
+  "imageData": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "userCustomization": {
+    "name": "测试生物001",
+    "story": "这是一个测试生物的故事"
+  }
+}
+
+### 2.2 创建第二个生物
+# @name createCreature2
+POST {{baseUrl}}/api/creatures
+Content-Type: {{contentType}}
+Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+{
+  "imageData": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==",
+  "userCustomization": {
+    "name": "星云漂流者",
+    "story": "来自遥远星云的神秘生物"
+  }
+}
+
+### 2.3 测试错误：未登录创建生物
+POST {{baseUrl}}/api/creatures
+Content-Type: {{contentType}}
+
+{
+  "imageData": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "userCustomization": {
+    "name": "未授权生物"
+  }
+}
+
+### 2.4 测试错误：缺少图片数据
+POST {{baseUrl}}/api/creatures
+Content-Type: {{contentType}}
+Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+{
+  "userCustomization": {
+    "name": "无图片生物"
+  }
+}
+
+### ============================================
+### 3. 生物查询测试（公开接口，无需登录）
+### ============================================
+
+### 3.1 获取所有生物（分页）
+# @name getAllCreatures
+GET {{baseUrl}}/api/creatures?page=1&limit=10
+
+### 3.2 获取所有生物（第二页）
+GET {{baseUrl}}/api/creatures?page=2&limit=5
+
+### 3.3 获取单个生物详情
+GET {{baseUrl}}/api/creatures/{{createCreature.response.body.id}}
+
+### 3.4 随机遇见生物
+# @name randomCreature
+GET {{baseUrl}}/api/creatures/random
+
+### 3.5 测试错误：生物不存在
+GET {{baseUrl}}/api/creatures/00000000-0000-0000-0000-000000000000
+
+### ============================================
+### 4. 我的生物测试（需要登录）
+### ============================================
+
+### 4.1 获取我创建的生物列表
+# @name myCreatures
+GET {{baseUrl}}/api/creatures/my/list
+Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+### 4.2 测试错误：未登录获取我的生物
+GET {{baseUrl}}/api/creatures/my/list
+
+### ============================================
+### 5. 生物更新测试（需要登录且是创建者）
+### ============================================
+
+### 5.1 更新生物信息
+# @name updateCreature
+PATCH {{baseUrl}}/api/creatures/{{createCreature.response.body.id}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+{
+  "name": "测试生物001（已更新）",
+  "backstory": "这是更新后的背景故事，更加详细和有趣"
+}
+
+### 5.2 只更新名称
+PATCH {{baseUrl}}/api/creatures/{{createCreature.response.body.id}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+{
+  "name": "新名称"
+}
+
+### 5.3 只更新背景故事
+PATCH {{baseUrl}}/api/creatures/{{createCreature.response.body.id}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+{
+  "backstory": "全新的背景故事"
+}
+
+### 5.4 测试错误：未登录更新
+PATCH {{baseUrl}}/api/creatures/{{createCreature.response.body.id}}
+Content-Type: {{contentType}}
+
+{
+  "name": "未授权更新"
+}
+
+### 5.5 测试错误：更新他人的生物（使用第二个用户的token）
+# 先登录第二个用户
+# @name login2
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "test002@example.com",
+  "password": "Test123456"
+}
+
+###
+PATCH {{baseUrl}}/api/creatures/{{createCreature.response.body.id}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{login2.response.body.tokens.accessToken}}
+
+{
+  "name": "尝试修改他人生物"
+}
+
+### ============================================
+### 6. 生物删除测试（需要登录且是创建者）
+### ============================================
+
+### 6.1 创建一个用于删除的生物
+# @name creatureToDelete
+POST {{baseUrl}}/api/creatures
+Content-Type: {{contentType}}
+Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+{
+  "imageData": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "userCustomization": {
+    "name": "待删除生物"
+  }
+}
+
+### 6.2 删除生物
+DELETE {{baseUrl}}/api/creatures/{{creatureToDelete.response.body.id}}
+Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+### 6.3 验证删除（应该返回404）
+GET {{baseUrl}}/api/creatures/{{creatureToDelete.response.body.id}}
+
+### 6.4 测试错误：未登录删除
+DELETE {{baseUrl}}/api/creatures/{{createCreature.response.body.id}}
+
+### 6.5 测试错误：删除他人的生物
+DELETE {{baseUrl}}/api/creatures/{{createCreature.response.body.id}}
+Authorization: Bearer {{login2.response.body.tokens.accessToken}}
+
+### ============================================
+### 7. 综合测试场景
+### ============================================
+
+### 7.1 完整用户流程测试
+# 1. 注册新用户
+# @name flowUser
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "username": "flow_test_user",
+  "email": "flow@example.com",
+  "password": "Flow123456"
+}
+
+### 2. 登录
+# @name flowLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "flow@example.com",
+  "password": "Flow123456"
+}
+
+### 3. 创建生物
+# @name flowCreature
+POST {{baseUrl}}/api/creatures
+Content-Type: {{contentType}}
+Authorization: Bearer {{flowLogin.response.body.tokens.accessToken}}
+
+{
+  "imageData": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
+  "userCustomization": {
+    "name": "流程测试生物",
+    "story": "这是一个完整流程测试"
+  }
+}
+
+### 4. 查看我的生物
+GET {{baseUrl}}/api/creatures/my/list
+Authorization: Bearer {{flowLogin.response.body.tokens.accessToken}}
+
+### 5. 更新生物
+PATCH {{baseUrl}}/api/creatures/{{flowCreature.response.body.id}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{flowLogin.response.body.tokens.accessToken}}
+
+{
+  "name": "流程测试生物（已更新）"
+}
+
+### 6. 查看更新后的生物
+GET {{baseUrl}}/api/creatures/{{flowCreature.response.body.id}}
+
+### 7. 浏览所有生物
+GET {{baseUrl}}/api/creatures?page=1&limit=20
+
+### 8. 随机遇见
+GET {{baseUrl}}/api/creatures/random
+
+### ============================================
+### 8. 边界测试
+### ============================================
+
+### 8.1 测试超长用户名
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "username": "this_is_a_very_long_username_that_exceeds_the_maximum_length_allowed",
+  "email": "longname@example.com",
+  "password": "Test123456"
+}
+
+### 8.2 测试无效邮箱格式
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "username": "invalid_email_user",
+  "email": "not-an-email",
+  "password": "Test123456"
+}
+
+### 8.3 测试弱密码
+POST {{baseUrl}}/api/auth/register
+Content-Type: {{contentType}}
+
+{
+  "username": "weak_password_user",
+  "email": "weak@example.com",
+  "password": "123"
+}
+
+### 8.4 测试超大分页参数
+GET {{baseUrl}}/api/creatures?page=999999&limit=1000
+
+### 8.5 测试负数分页参数
+GET {{baseUrl}}/api/creatures?page=-1&limit=-10
+
+### ============================================
+### 测试完成
+### ============================================
+
+### 清理测试数据（可选）
+### 注意：这会删除测试过程中创建的生物
+### 取消注释以下代码来执行清理
+
+# DELETE {{baseUrl}}/api/creatures/{{createCreature.response.body.id}}
+# Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+# DELETE {{baseUrl}}/api/creatures/{{createCreature2.response.body.id}}
+# Authorization: Bearer {{login.response.body.tokens.accessToken}}
+
+# DELETE {{baseUrl}}/api/creatures/{{flowCreature.response.body.id}}
+# Authorization: Bearer {{flowLogin.response.body.tokens.accessToken}}

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>认证调试工具</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+        }
+        .info {
+            background: #e3f2fd;
+            border-left-color: #2196F3;
+        }
+        .warning {
+            background: #fff3e0;
+            border-left-color: #FF9800;
+        }
+        .error {
+            background: #ffebee;
+            border-left-color: #f44336;
+        }
+        .success {
+            background: #e8f5e9;
+            border-left-color: #4CAF50;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button.secondary {
+            background: #2196F3;
+        }
+        button.secondary:hover {
+            background: #0b7dda;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .token-display {
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Cosmic Drift 认证调试工具</h1>
+
+        <div class="section info">
+            <h3>当前状态检查</h3>
+            <div id="status">正在检查...</div>
+        </div>
+
+        <div class="section">
+            <h3>快速操作</h3>
+            <button onclick="checkToken()">检查 Token</button>
+            <button onclick="testLogin()" class="secondary">测试登录</button>
+            <button onclick="testCreateCreature()" class="secondary">测试创建生物</button>
+            <button onclick="clearToken()">清除 Token</button>
+        </div>
+
+        <div class="section">
+            <h3>详细信息</h3>
+            <div id="details"></div>
+        </div>
+
+        <div class="section">
+            <h3>测试结果</h3>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3001';
+
+        // 页面加载时自动检查
+        window.onload = function() {
+            checkToken();
+        };
+
+        function checkToken() {
+            const token = localStorage.getItem('accessToken');
+            const statusDiv = document.getElementById('status');
+            const detailsDiv = document.getElementById('details');
+
+            if (!token) {
+                statusDiv.innerHTML = '<div class="error"><strong>❌ 未登录</strong><br>localStorage 中没有找到 accessToken</div>';
+                detailsDiv.innerHTML = '<p>请先登录后再尝试创建生物。</p>';
+                return;
+            }
+
+            // 解析 token
+            try {
+                const parts = token.split('.');
+                if (parts.length !== 3) {
+                    statusDiv.innerHTML = '<div class="error"><strong>❌ Token 格式错误</strong><br>Token 不是有效的 JWT 格式</div>';
+                    return;
+                }
+
+                const payload = JSON.parse(atob(parts[1]));
+                const now = Math.floor(Date.now() / 1000);
+                const isExpired = payload.exp && payload.exp < now;
+
+                if (isExpired) {
+                    const expiredTime = new Date(payload.exp * 1000).toLocaleString('zh-CN');
+                    statusDiv.innerHTML = `<div class="warning"><strong>⚠️ Token 已过期</strong><br>过期时间: ${expiredTime}</div>`;
+                } else {
+                    const expiresIn = payload.exp ? Math.floor((payload.exp - now) / 60) : 'unknown';
+                    statusDiv.innerHTML = `<div class="success"><strong>✅ 已登录</strong><br>Token 剩余有效期: ${expiresIn} 分钟</div>`;
+                }
+
+                detailsDiv.innerHTML = `
+                    <p><strong>Token Payload:</strong></p>
+                    <pre>${JSON.stringify(payload, null, 2)}</pre>
+                    <p><strong>Token (前50字符):</strong></p>
+                    <p class="token-display">${token.substring(0, 50)}...</p>
+                `;
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="error"><strong>❌ Token 解析失败</strong><br>${error.message}</div>`;
+            }
+        }
+
+        async function testLogin() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>正在测试登录...</p>';
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'creator@test.com',
+                        password: 'creator123'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('accessToken', data.accessToken);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ 登录成功</strong>
+                            <pre>${JSON.stringify(data.user, null, 2)}</pre>
+                            <p>Token 已保存到 localStorage</p>
+                        </div>
+                    `;
+                    checkToken();
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <strong>❌ 登录失败</strong>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ 请求失败</strong>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testCreateCreature() {
+            const resultsDiv = document.getElementById('results');
+            const token = localStorage.getItem('accessToken');
+
+            if (!token) {
+                resultsDiv.innerHTML = '<div class="error"><strong>❌ 请先登录</strong></div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<p>正在测试创建生物...</p>';
+
+            const testCreature = {
+                name: '测试生物',
+                species: 'test-species',
+                personality: '友好、好奇',
+                habitat: '测试星球',
+                backstory: '这是一个测试生物',
+                imageUrl: 'https://via.placeholder.com/150'
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/api/creatures`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(testCreature)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <strong>✅ 创建成功</strong>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultsDiv.innerHTML = `
+                        <div class="error">
+                            <strong>❌ 创建失败 (${response.status})</strong>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ 请求失败</strong>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function clearToken() {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            alert('Token 已清除');
+            checkToken();
+        }
+    </script>
+</body>
+</html>
