@@ -148,19 +148,23 @@ const GalaxyScene: React.FC<GalaxySceneProps> = ({
       );
 
       raycasterRef.current.setFromCamera(mouse, camera);
-      const creatureNodes = scene.getObjectByName('creatureNodes');
+      const creatureNodesGroup = scene.getObjectByName('creatureNodes');
       
-      if (creatureNodes && creatureNodes instanceof THREE.InstancedMesh) {
-        const intersects = raycasterRef.current.intersectObject(creatureNodes);
+      if (creatureNodesGroup) {
+        const creatureNodesMesh = creatureNodesGroup.getObjectByName('creatureNodesMesh');
         
-        if (intersects.length > 0 && intersects[0].instanceId !== undefined) {
-          const instanceId = intersects[0].instanceId;
-          const nodeData = nodeDataRef.current[instanceId];
+        if (creatureNodesMesh && creatureNodesMesh instanceof THREE.InstancedMesh) {
+          const intersects = raycasterRef.current.intersectObject(creatureNodesMesh);
           
-          if (nodeData && onCreatureClick) {
-            onCreatureClick(nodeData.profile);
-            // Focus camera on clicked creature
-            cameraController.focusOn(nodeData.position, 15);
+          if (intersects.length > 0 && intersects[0].instanceId !== undefined) {
+            const instanceId = intersects[0].instanceId;
+            const nodeData = nodeDataRef.current[instanceId];
+            
+            if (nodeData && onCreatureClick) {
+              onCreatureClick(nodeData.profile);
+              // Focus camera on clicked creature
+              cameraController.focusOn(nodeData.position, 15);
+            }
           }
         }
       }
@@ -195,35 +199,54 @@ const GalaxyScene: React.FC<GalaxySceneProps> = ({
       }
 
       // 添加生物脉动动画
-      const creatureNodes = scene.getObjectByName('creatureNodes');
-      if (creatureNodes && creatureNodes instanceof THREE.InstancedMesh) {
-        const time = Date.now() * 0.001; // 时间（秒）
-        const matrix = new THREE.Matrix4();
-        const position = new THREE.Vector3();
-        const quaternion = new THREE.Quaternion();
-        const scale = new THREE.Vector3();
+      const creatureNodesGroup = scene.getObjectByName('creatureNodes');
+      if (creatureNodesGroup) {
+        const creatureNodesMesh = creatureNodesGroup.getObjectByName('creatureNodesMesh') as THREE.InstancedMesh;
+        const creatureNodesGlow = creatureNodesGroup.getObjectByName('creatureNodesGlow') as THREE.Points;
+        
+        if (creatureNodesMesh && creatureNodesGlow) {
+          const time = Date.now() * 0.001;
+          const matrix = new THREE.Matrix4();
+          const position = new THREE.Vector3();
+          const quaternion = new THREE.Quaternion();
+          const scale = new THREE.Vector3();
+          
+          const glowPositions = creatureNodesGlow.geometry.attributes.position.array as Float32Array;
+          const glowSizes = creatureNodesGlow.geometry.attributes.size.array as Float32Array;
 
-        nodeDataRef.current.forEach((nodeData, index) => {
-          creatureNodes.getMatrixAt(index, matrix);
-          matrix.decompose(position, quaternion, scale);
+          nodeDataRef.current.forEach((nodeData, index) => {
+            creatureNodesMesh.getMatrixAt(index, matrix);
+            matrix.decompose(position, quaternion, scale);
 
-          // 脉动效果 - 根据情绪值调整频率
-          const pulseFrequency = 1 + (nodeData.profile.emotionValue / 100) * 2;
-          const pulseAmount = 0.1 + (nodeData.profile.emotionValue / 100) * 0.15;
-          const pulse = Math.sin(time * pulseFrequency + index * 0.5) * pulseAmount + 1;
+            // 脉动效果
+            const pulseFrequency = 1 + (nodeData.profile.emotionValue / 100) * 2;
+            const pulseAmount = 0.1 + (nodeData.profile.emotionValue / 100) * 0.15;
+            const pulse = Math.sin(time * pulseFrequency + index * 0.5) * pulseAmount + 1;
 
-          // 缓慢旋转
-          quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0.01, 0)));
+            // 缓慢旋转
+            quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0.01, 0)));
 
-          // 应用脉动到缩放
-          const baseScale = nodeData.visualState.size;
-          scale.set(baseScale * pulse, baseScale * pulse, baseScale * pulse);
+            // 应用脉动到主体
+            const baseScale = nodeData.visualState.size;
+            scale.set(baseScale * pulse, baseScale * pulse, baseScale * pulse);
+            matrix.compose(position, quaternion, scale);
+            creatureNodesMesh.setMatrixAt(index, matrix);
 
-          matrix.compose(position, quaternion, scale);
-          creatureNodes.setMatrixAt(index, matrix);
-        });
+            // 更新光晕粒子位置（跟随主体）
+            const i3 = index * 3;
+            glowPositions[i3] = nodeData.position.x;
+            glowPositions[i3 + 1] = nodeData.position.y;
+            glowPositions[i3 + 2] = nodeData.position.z;
+            
+            // 光晕大小也跟随脉动（更大更模糊）
+            const baseGlowSize = baseScale * 8 * (0.8 + nodeData.visualState.glowIntensity * 0.4);
+            glowSizes[index] = baseGlowSize * pulse;
+          });
 
-        creatureNodes.instanceMatrix.needsUpdate = true;
+          creatureNodesMesh.instanceMatrix.needsUpdate = true;
+          creatureNodesGlow.geometry.attributes.position.needsUpdate = true;
+          creatureNodesGlow.geometry.attributes.size.needsUpdate = true;
+        }
       }
 
       // Update camera controller for smooth transitions
@@ -234,28 +257,32 @@ const GalaxyScene: React.FC<GalaxySceneProps> = ({
       // Check for hover interactions (only when not dragging)
       if (camera && scene && !cameraControllerRef.current?.getIsDragging()) {
         raycasterRef.current.setFromCamera(mouseRef.current, camera);
-        const creatureNodes = scene.getObjectByName('creatureNodes');
+        const creatureNodesGroup = scene.getObjectByName('creatureNodes');
         
-        if (creatureNodes && creatureNodes instanceof THREE.InstancedMesh) {
-          const intersects = raycasterRef.current.intersectObject(creatureNodes);
+        if (creatureNodesGroup) {
+          const creatureNodesMesh = creatureNodesGroup.getObjectByName('creatureNodesMesh');
           
-          if (intersects.length > 0 && intersects[0].instanceId !== undefined) {
-            const instanceId = intersects[0].instanceId;
-            const nodeData = nodeDataRef.current[instanceId];
+          if (creatureNodesMesh && creatureNodesMesh instanceof THREE.InstancedMesh) {
+            const intersects = raycasterRef.current.intersectObject(creatureNodesMesh);
             
-            if (nodeData && hoveredCreature !== nodeData.id) {
-              setHoveredCreature(nodeData.id);
-              if (onCreatureHover) {
-                onCreatureHover(nodeData.profile);
+            if (intersects.length > 0 && intersects[0].instanceId !== undefined) {
+              const instanceId = intersects[0].instanceId;
+              const nodeData = nodeDataRef.current[instanceId];
+              
+              if (nodeData && hoveredCreature !== nodeData.id) {
+                setHoveredCreature(nodeData.id);
+                if (onCreatureHover) {
+                  onCreatureHover(nodeData.profile);
+                }
+                document.body.style.cursor = 'pointer';
               }
-              document.body.style.cursor = 'pointer';
+            } else if (hoveredCreature !== null) {
+              setHoveredCreature(null);
+              if (onCreatureHover) {
+                onCreatureHover(null);
+              }
+              document.body.style.cursor = 'default';
             }
-          } else if (hoveredCreature !== null) {
-            setHoveredCreature(null);
-            if (onCreatureHover) {
-              onCreatureHover(null);
-            }
-            document.body.style.cursor = 'default';
           }
         }
       }
@@ -347,6 +374,25 @@ const GalaxyScene: React.FC<GalaxySceneProps> = ({
 };
 
 /**
+ * Creates a circular texture for particles
+ */
+function createCircleTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = 32;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.4, 'rgba(255, 255, 255, 0.8)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 32, 32);
+  }
+  return new THREE.CanvasTexture(canvas);
+}
+
+/**
  * Creates a starfield background with thousands of stars and galaxy nebula
  */
 function createStarfield(scene: THREE.Scene): void {
@@ -412,9 +458,10 @@ function createStarfield(scene: THREE.Scene): void {
     size: 2,
     vertexColors: true,
     transparent: true,
-    opacity: 0.35, // 降低银河带亮度
+    opacity: 0.35,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
+    map: createCircleTexture(), // 添加圆形纹理
   });
 
   const galaxyBand = new THREE.Points(galaxyBandGeometry, galaxyBandMaterial);
@@ -456,9 +503,10 @@ function createStarfield(scene: THREE.Scene): void {
     size: 1.5,
     vertexColors: true,
     transparent: true,
-    opacity: 0.3, // 降低星云亮度
+    opacity: 0.3,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
+    map: createCircleTexture(), // 添加圆形纹理
   });
 
   const nebula = new THREE.Points(nebulaGeometry, nebulaMaterial);
@@ -503,13 +551,14 @@ function createStarfield(scene: THREE.Scene): void {
 
   // Create star material with glow effect
   const starMaterial = new THREE.PointsMaterial({
-    size: 2.0, // 更大的星星
+    size: 2.0,
     vertexColors: true,
     transparent: true,
-    opacity: 0.9, // 更不透明
+    opacity: 0.9,
     sizeAttenuation: true,
-    blending: THREE.AdditiveBlending, // 发光混合模式
-    depthWrite: false, // 避免深度冲突
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    map: createCircleTexture(), // 添加圆形纹理
   });
 
   const starfield = new THREE.Points(starGeometry, starMaterial);
