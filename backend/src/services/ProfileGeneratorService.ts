@@ -11,14 +11,14 @@ interface GeneratedProfile {
 }
 
 class ProfileGeneratorService {
-  private readonly openaiApiKey: string;
+  private readonly qwenApiKey: string;
   private readonly maxRetries: number = 3;
   private readonly retryDelay: number = 1000;
 
   constructor() {
-    this.openaiApiKey = process.env.OPENAI_API_KEY || '';
-    if (!this.openaiApiKey) {
-      console.warn('OPENAI_API_KEY not configured. Profile generation will use fallback mode.');
+    this.qwenApiKey = process.env.QWEN_API_KEY || '';
+    if (!this.qwenApiKey) {
+      console.warn('QWEN_API_KEY not configured. Profile generation will use fallback mode.');
     }
   }
 
@@ -30,7 +30,7 @@ class ProfileGeneratorService {
     suggestedProfile: SuggestedProfile,
     userCustomization?: { name?: string; story?: string }
   ): Promise<GeneratedProfile> {
-    if (!this.openaiApiKey) {
+    if (!this.qwenApiKey) {
       return this.getFallbackProfile(suggestedProfile, userCustomization);
     }
 
@@ -55,7 +55,7 @@ class ProfileGeneratorService {
   }
 
   /**
-   * Call GPT-4 to generate creature profile
+   * Call Qwen (通义千问) to generate creature profile
    */
   private async callGPT4(
     visualFeatures: VisualFeatures,
@@ -65,10 +65,14 @@ class ProfileGeneratorService {
     const prompt = this.buildPrompt(visualFeatures, suggestedProfile, userCustomization);
 
     try {
+      console.log('Calling Qwen API...');
+      console.log('API Key (first 10 chars):', this.qwenApiKey.substring(0, 10) + '...');
+      
+      // 使用通义千问 API
       const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
+        'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
         {
-          model: 'gpt-4',
+          model: 'qwen-plus',
           messages: [
             {
               role: 'system',
@@ -91,12 +95,13 @@ class ProfileGeneratorService {
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.openaiApiKey}`,
+            Authorization: `Bearer ${this.qwenApiKey}`,
           },
           timeout: 30000,
         }
       );
 
+      console.log('Qwen API response received');
       const content = response.data.choices[0].message.content;
       const profile = this.parseProfileFromResponse(content, suggestedProfile, userCustomization);
       
@@ -104,7 +109,13 @@ class ProfileGeneratorService {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError;
-        console.error('OpenAI API error:', axiosError.response?.data || axiosError.message);
+        console.error('Qwen API error details:');
+        console.error('Status:', axiosError.response?.status);
+        console.error('Status Text:', axiosError.response?.statusText);
+        console.error('Response data:', JSON.stringify(axiosError.response?.data, null, 2));
+        console.error('Request URL:', axiosError.config?.url);
+      } else {
+        console.error('Non-Axios error:', error);
       }
       throw error;
     }
