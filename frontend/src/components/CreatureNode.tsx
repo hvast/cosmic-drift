@@ -17,33 +17,47 @@ export interface CreatureNodeData {
 
 /**
  * Calculate node color based on emotion value
- * Low emotion (0-30): Cool colors (blue, purple)
- * Medium emotion (31-70): Neutral colors (cyan, teal)
- * High emotion (71-100): Warm colors (pink, orange)
+ * 更丰富绚丽的颜色渐变
  */
 export function getColorFromEmotion(emotionValue: number): THREE.Color {
-  if (emotionValue <= 30) {
-    // Cold/distant - blue to purple
-    const t = emotionValue / 30;
+  if (emotionValue <= 20) {
+    // 深蓝到紫色 - 冷静/孤独
+    const t = emotionValue / 20;
     return new THREE.Color().lerpColors(
-      new THREE.Color(0x4a5568), // Dark gray-blue
-      new THREE.Color(0x667eea), // Purple-blue
+      new THREE.Color(0x1e3a8a), // 深蓝
+      new THREE.Color(0x7c3aed), // 紫色
       t
     );
-  } else if (emotionValue <= 70) {
-    // Neutral/curious - cyan to teal
-    const t = (emotionValue - 30) / 40;
+  } else if (emotionValue <= 40) {
+    // 紫色到青色 - 好奇/探索
+    const t = (emotionValue - 20) / 20;
     return new THREE.Color().lerpColors(
-      new THREE.Color(0x4fd1c5), // Cyan
-      new THREE.Color(0x38b2ac), // Teal
+      new THREE.Color(0x7c3aed), // 紫色
+      new THREE.Color(0x06b6d4), // 青色
+      t
+    );
+  } else if (emotionValue <= 60) {
+    // 青色到绿色 - 平和/成长
+    const t = (emotionValue - 40) / 20;
+    return new THREE.Color().lerpColors(
+      new THREE.Color(0x06b6d4), // 青色
+      new THREE.Color(0x10b981), // 绿色
+      t
+    );
+  } else if (emotionValue <= 80) {
+    // 绿色到黄色 - 活跃/兴奋
+    const t = (emotionValue - 60) / 20;
+    return new THREE.Color().lerpColors(
+      new THREE.Color(0x10b981), // 绿色
+      new THREE.Color(0xfbbf24), // 黄色
       t
     );
   } else {
-    // Warm/connected - pink to orange
-    const t = (emotionValue - 70) / 30;
+    // 黄色到粉红 - 热情/连接
+    const t = (emotionValue - 80) / 20;
     return new THREE.Color().lerpColors(
-      new THREE.Color(0xf687b3), // Pink
-      new THREE.Color(0xf6ad55), // Orange
+      new THREE.Color(0xfbbf24), // 黄色
+      new THREE.Color(0xf472b6), // 粉红
       t
     );
   }
@@ -84,14 +98,18 @@ export function createCreatureNodes(
   mesh: THREE.InstancedMesh;
   nodeData: CreatureNodeData[];
 } {
-  const geometry = new THREE.SphereGeometry(0.5, 16, 16);
+  // 使用球体，更细腻的分段数让表面更光滑
+  const geometry = new THREE.SphereGeometry(1, 32, 32);
   
-  // Create material with emissive properties for glow effect
+  // 创建强发光材质 - 让生物更突出
   const material = new THREE.MeshStandardMaterial({
     emissive: new THREE.Color(0x4fd1c5),
-    emissiveIntensity: 0.5,
-    metalness: 0.3,
-    roughness: 0.7,
+    emissiveIntensity: 2.5, // 大幅增强发光强度
+    metalness: 0.1,
+    roughness: 0.2,
+    transparent: true,
+    opacity: 0.95, // 更不透明
+    side: THREE.FrontSide,
   });
 
   const mesh = new THREE.InstancedMesh(geometry, material, creatures.length);
@@ -99,14 +117,25 @@ export function createCreatureNodes(
 
   const nodeData: CreatureNodeData[] = [];
   const matrix = new THREE.Matrix4();
+  const quaternion = new THREE.Quaternion();
 
   creatures.forEach((creature, index) => {
     const position = generateNodePosition(index, creatures.length);
     const nodeColor = getColorFromEmotion(creature.emotionValue);
     const glowIntensity = getGlowIntensity(creature.emotionValue);
     
-    // Set instance transform
-    matrix.setPosition(position);
+    // 根据情绪值调整大小 - 增大生物尺寸
+    const sizeMultiplier = 1.2 + (creature.emotionValue / 100) * 0.8;
+    
+    // 随机旋转，让每个生物看起来不同
+    quaternion.setFromEuler(new THREE.Euler(
+      Math.random() * Math.PI,
+      Math.random() * Math.PI,
+      Math.random() * Math.PI
+    ));
+    
+    // Set instance transform with rotation and scale
+    matrix.compose(position, quaternion, new THREE.Vector3(sizeMultiplier, sizeMultiplier, sizeMultiplier));
     mesh.setMatrixAt(index, matrix);
     
     // Set instance color
@@ -119,7 +148,7 @@ export function createCreatureNodes(
       profile: creature,
       visualState: {
         color: `#${nodeColor.getHexString()}`,
-        size: 0.5,
+        size: sizeMultiplier,
         glowIntensity,
       },
     });

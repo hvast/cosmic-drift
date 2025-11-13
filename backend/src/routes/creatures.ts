@@ -15,6 +15,7 @@ router.get('/:id', CreatureController.getById.bind(CreatureController));
 router.post('/', /* authenticate, */ validateCreateCreature, CreatureController.create.bind(CreatureController));
 router.get('/my/list', /* authenticate, */ CreatureController.getMy.bind(CreatureController));
 router.patch('/:id', /* authenticate, */ validateUpdateCreature, CreatureController.update.bind(CreatureController));
+router.put('/:id', /* authenticate, */ validateUpdateCreature, CreatureController.update.bind(CreatureController)); // 同时支持 PUT
 router.delete('/:id', /* authenticate, */ CreatureController.delete.bind(CreatureController));
 
 export default router;

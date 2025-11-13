@@ -49,7 +49,7 @@ export const creatureService = {
    */
   async updateCreature(
     id: string,
-    updates: { name?: string; backstory?: string }
+    updates: { name?: string; backstory?: string; emotionValue?: number }
   ): Promise<CreatureProfile> {
     // TEMPORARILY DISABLED AUTH FOR TESTING
     return await api.put<CreatureProfile>(`/api/creatures/${id}`, updates, false);

@@ -3,13 +3,17 @@ import { fabric } from 'fabric';
 
 interface CreatureCanvasProps {
   onExport: (imageData: string) => void;
+  onDrawingChange?: () => void; // 绘制变化回调
+  initialImage?: string; // 初始图片数据
   width?: number;
   height?: number;
 }
 
 const CreatureCanvas: React.FC<CreatureCanvasProps> = ({
   onExport,
-  width = 800,
+  onDrawingChange,
+  initialImage,
+  width = 600,
   height = 600,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -17,6 +21,7 @@ const CreatureCanvas: React.FC<CreatureCanvasProps> = ({
   const [brushColor, setBrushColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(5);
   const [isEraser, setIsEraser] = useState(false);
+  const [hasDrawn, setHasDrawn] = useState(false);
 
   // Initialize canvas
   useEffect(() => {
@@ -34,10 +39,31 @@ const CreatureCanvas: React.FC<CreatureCanvasProps> = ({
 
     setCanvas(fabricCanvas);
 
+    // 如果有初始图片，加载它
+    if (initialImage) {
+      fabric.Image.fromURL(initialImage, (img) => {
+        if (img && fabricCanvas) {
+          // 缩放图片以适应画布
+          const scale = Math.min(width / (img.width || 1), height / (img.height || 1));
+          img.scale(scale);
+          img.set({
+            left: (width - (img.width || 0) * scale) / 2,
+            top: (height - (img.height || 0) * scale) / 2,
+            selectable: false,
+            evented: false,
+          });
+          fabricCanvas.add(img);
+          fabricCanvas.sendToBack(img);
+          fabricCanvas.renderAll();
+          setHasDrawn(true);
+        }
+      });
+    }
+
     return () => {
       fabricCanvas.dispose();
     };
-  }, [width, height]);
+  }, [width, height, brushColor, brushSize]);
 
   // Update brush color
   useEffect(() => {
@@ -52,6 +78,25 @@ const CreatureCanvas: React.FC<CreatureCanvasProps> = ({
     if (!canvas) return;
     canvas.freeDrawingBrush.width = brushSize;
   }, [canvas, brushSize]);
+
+  // 监听绘制事件，标记已绘制和未保存
+  useEffect(() => {
+    if (!canvas) return;
+
+    const handlePathCreated = () => {
+      setHasDrawn(true);
+      // 通知父组件有未保存的更改
+      if (onDrawingChange) {
+        onDrawingChange();
+      }
+    };
+
+    canvas.on('path:created', handlePathCreated);
+
+    return () => {
+      canvas.off('path:created', handlePathCreated);
+    };
+  }, [canvas, onDrawingChange]);
 
   // Toggle eraser mode
   useEffect(() => {
@@ -68,6 +113,7 @@ const CreatureCanvas: React.FC<CreatureCanvasProps> = ({
     canvas.clear();
     canvas.backgroundColor = '#ffffff';
     canvas.renderAll();
+    setHasDrawn(false);
   };
 
   const handleExport = () => {

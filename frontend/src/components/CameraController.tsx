@@ -26,6 +26,11 @@ export class CameraController {
    */
   handleWheel(event: WheelEvent): void {
     event.preventDefault();
+    
+    // 只在按住 Ctrl 键时才允许缩放，避免意外缩放
+    if (!event.ctrlKey) {
+      return;
+    }
 
     const zoomSpeed = 0.1;
     const delta = event.deltaY > 0 ? 1 : -1;

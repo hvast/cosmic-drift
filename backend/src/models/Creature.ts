@@ -6,8 +6,8 @@ export interface Creature {
   habitat: string;
   backstory: string;
   imageUrl: string;
-  creatorId: string;
-  adopterId?: string;
+  creatorId: string | null;
+  adopterId?: string | null;
   status: 'drifting' | 'adopted';
   emotionValue: number;
   createdAt: Date;
@@ -21,6 +21,6 @@ export interface CreateCreatureData {
   habitat: string;
   backstory: string;
   imageUrl: string;
-  creatorId: string;
+  creatorId: string | null;
   emotionValue?: number;
 }

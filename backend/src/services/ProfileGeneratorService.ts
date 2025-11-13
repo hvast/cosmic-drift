@@ -7,6 +7,7 @@ interface GeneratedProfile {
   personality: string[];
   habitat: string;
   backstory: string;
+  emotionValue?: number;
 }
 
 class ProfileGeneratorService {

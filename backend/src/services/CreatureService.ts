@@ -11,7 +11,7 @@ class CreatureService {
    */
   async createCreature(
     request: CreatureCreationRequest,
-    userId: string
+    userId: string | null = null
   ): Promise<Creature> {
     const startTime = Date.now();
 
@@ -22,34 +22,55 @@ class CreatureService {
         throw new Error(validation.error);
       }
 
-      // Step 2: Analyze image (parallel with storage)
-      const [analysisResult, imageUrl] = await Promise.all([
-        ImageAnalysisService.analyzeImage(request.imageData),
-        StorageService.saveImage(request.imageData, userId),
-      ]);
+      // Step 2: Save image
+      const imageUrl = await StorageService.saveImage(request.imageData, userId || 'anonymous');
 
-      // Step 3: Generate profile using AI
-      const generatedProfile = await ProfileGeneratorService.generateProfile(
-        analysisResult.visualFeatures,
-        analysisResult.suggestedProfile,
-        request.userCustomization
-      );
+      // Check if user provided complete manual customization (story is optional)
+      const hasCompleteCustomization = request.userCustomization && 
+        request.userCustomization.name &&
+        request.userCustomization.species &&
+        request.userCustomization.habitat;
 
-      // Validate profile
-      if (!ProfileGeneratorService.validateProfile(generatedProfile)) {
-        throw new Error('Generated profile is invalid');
+      let finalProfile;
+
+      if (hasCompleteCustomization) {
+        // User provided complete data, skip AI generation
+        console.log('Using user-provided complete customization');
+        finalProfile = {
+          name: request.userCustomization!.name!,
+          species: request.userCustomization!.species!,
+          personality: request.userCustomization!.personality || [],
+          habitat: request.userCustomization!.habitat!,
+          backstory: request.userCustomization!.story! || '这个生命的故事尚未被书写...',
+          emotionValue: request.userCustomization!.emotionValue,
+        };
+      } else {
+        // Use AI to generate or fill missing fields
+        console.log('Using AI to generate profile');
+        const analysisResult = await ImageAnalysisService.analyzeImage(request.imageData);
+        
+        finalProfile = await ProfileGeneratorService.generateProfile(
+          analysisResult.visualFeatures,
+          analysisResult.suggestedProfile,
+          request.userCustomization
+        );
+
+        // Validate AI-generated profile
+        if (!ProfileGeneratorService.validateProfile(finalProfile)) {
+          throw new Error('Generated profile is invalid');
+        }
       }
 
-      // Step 4: Save to database
+      // Step 3: Save to database
       const creature = await CreatureRepository.create({
-        name: generatedProfile.name,
-        species: generatedProfile.species,
-        personality: generatedProfile.personality,
-        habitat: generatedProfile.habitat,
-        backstory: generatedProfile.backstory,
+        name: finalProfile.name,
+        species: finalProfile.species,
+        personality: finalProfile.personality,
+        habitat: finalProfile.habitat,
+        backstory: finalProfile.backstory,
         imageUrl,
         creatorId: userId,
-        emotionValue: 50,
+        emotionValue: (finalProfile as any).emotionValue || request.userCustomization?.emotionValue || 50,
       });
 
       const endTime = Date.now();
@@ -111,10 +132,11 @@ class CreatureService {
    */
   async updateCreature(
     id: string,
-    userId: string,
+    userId: string | null,
     updates: {
       name?: string;
       backstory?: string;
+      emotionValue?: number;
     }
   ): Promise<Creature> {
     // Verify creature exists and user is the creator
@@ -123,7 +145,8 @@ class CreatureService {
       throw new Error('Creature not found');
     }
 
-    if (creature.creatorId !== userId) {
+    // Skip authorization check if no user system
+    if (userId !== null && creature.creatorId !== userId) {
       throw new Error('Unauthorized: You can only update your own creatures');
     }
 
@@ -139,14 +162,15 @@ class CreatureService {
   /**
    * Delete creature
    */
-  async deleteCreature(id: string, userId: string): Promise<void> {
+  async deleteCreature(id: string, userId: string | null): Promise<void> {
     // Verify creature exists and user is the creator
     const creature = await CreatureRepository.findById(id);
     if (!creature) {
       throw new Error('Creature not found');
     }
 
-    if (creature.creatorId !== userId) {
+    // Skip authorization check if no user system
+    if (userId !== null && creature.creatorId !== userId) {
       throw new Error('Unauthorized: You can only delete your own creatures');
     }
 

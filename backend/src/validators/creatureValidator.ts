@@ -7,13 +7,18 @@ export const createCreatureSchema = Joi.object({
   }),
   userCustomization: Joi.object({
     name: Joi.string().min(1).max(50).optional(),
-    story: Joi.string().min(10).max(1000).optional(),
+    species: Joi.string().min(1).max(50).optional(),
+    personality: Joi.array().items(Joi.string().max(20)).max(6).optional(),
+    habitat: Joi.string().min(1).max(200).optional(),
+    story: Joi.string().min(0).max(1000).allow('').optional(),
+    emotionValue: Joi.number().min(0).max(100).optional(),
   }).optional(),
 });
 
 export const updateCreatureSchema = Joi.object({
   name: Joi.string().min(1).max(50).optional(),
-  backstory: Joi.string().min(10).max(1000).optional(),
+  backstory: Joi.string().min(0).max(1000).allow('').optional(),
+  emotionValue: Joi.number().min(0).max(100).optional(),
 }).min(1);
 
 export const validateCreateCreature = (req: any, res: any, next: any) => {

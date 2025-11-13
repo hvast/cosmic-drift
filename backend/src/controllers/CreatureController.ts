@@ -9,9 +9,9 @@ class CreatureController {
   async create(req: Request, res: Response): Promise<void> {
     try {
       const { imageData, userCustomization } = req.body;
-      // TEMPORARILY DISABLED AUTH - Use default test user
+      // TEMPORARILY DISABLED AUTH - Use null for creator_id (anonymous creation)
       // TODO: Re-enable authentication after core features are working
-      const userId = req.user?.id || 'test-user-id';
+      const userId = req.user?.id || null;
 
       // if (!userId) {
       //   res.status(401).json({ error: 'Unauthorized' });
@@ -88,8 +88,8 @@ class CreatureController {
    */
   async getMy(req: Request, res: Response): Promise<void> {
     try {
-      // TEMPORARILY DISABLED AUTH - Use default test user
-      const userId = req.user?.id || 'test-user-id';
+      // TEMPORARILY DISABLED AUTH - Use null for anonymous
+      const userId = req.user?.id || null;
 
       // if (!userId) {
       //   res.status(401).json({ error: 'Unauthorized' });

@@ -87,7 +87,30 @@ class CreatureRepository {
   /**
    * Find all creatures by creator
    */
-  async findByCreator(creatorId: string): Promise<Creature[]> {
+  async findByCreator(creatorId: string | null): Promise<Creature[]> {
+    if (creatorId === null) {
+      // Return all creatures with null creator_id
+      const selectQuery = `
+        SELECT
+          id, name, species, personality, habitat, backstory,
+          image_url as imageUrl, creator_id as creatorId,
+          adopter_id as adopterId, status, emotion_value as emotionValue,
+          created_at as createdAt, adopted_at as adoptedAt
+        FROM creatures
+        WHERE creator_id IS NULL
+        ORDER BY created_at DESC
+      `;
+
+      const result = await query(selectQuery, []);
+
+      return result.rows.map((row) => ({
+        ...row,
+        personality: typeof row.personality === 'string'
+          ? JSON.parse(row.personality)
+          : row.personality,
+      }));
+    }
+
     const selectQuery = `
       SELECT
         id, name, species, personality, habitat, backstory,

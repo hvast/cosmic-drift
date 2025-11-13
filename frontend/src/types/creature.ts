@@ -30,6 +30,10 @@ export interface CreatureCreationRequest {
   imageData: string;
   userCustomization?: {
     name?: string;
+    species?: string;
+    personality?: string[];
+    habitat?: string;
     story?: string;
+    emotionValue?: number;
   };
 }
