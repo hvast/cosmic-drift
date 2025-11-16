@@ -1,6 +1,7 @@
 import ImageAnalysisService from './ImageAnalysisService';
 import ProfileGeneratorService from './ProfileGeneratorService';
 import StorageService from './StorageService';
+import ContourExtractionService from './ContourExtractionService';
 import CreatureRepository from '../repositories/CreatureRepository';
 import { Creature } from '../models/Creature';
 import { CreatureCreationRequest } from '../types/creature';
@@ -24,6 +25,11 @@ class CreatureService {
 
       // Step 2: Save image
       const imageUrl = await StorageService.saveImage(request.imageData, userId || 'anonymous');
+
+      // Step 2.5: Extract contour data from image
+      console.log('Extracting contour data from image...');
+      const contourData = await ContourExtractionService.extractContour(request.imageData);
+      console.log(`Contour extraction completed: ${contourData.points.length} points`);
 
       // Check if user provided complete manual customization (story is optional)
       const hasCompleteCustomization = request.userCustomization && 
@@ -71,6 +77,7 @@ class CreatureService {
         imageUrl,
         creatorId: userId,
         emotionValue: (finalProfile as any).emotionValue || request.userCustomization?.emotionValue || 50,
+        contourData,
       });
 
       const endTime = Date.now();
@@ -95,6 +102,44 @@ class CreatureService {
    */
   async getCreatureById(id: string): Promise<Creature | null> {
     return CreatureRepository.findById(id);
+  }
+
+  /**
+   * Get or generate contour data for a creature
+   * If contour data doesn't exist, extract it from the image and save it
+   */
+  async getOrGenerateContour(id: string): Promise<any | null> {
+    try {
+      // Get creature from database
+      const creature = await CreatureRepository.findById(id);
+      
+      if (!creature) {
+        console.error(`Creature ${id} not found`);
+        return null;
+      }
+
+      // If contour data already exists, return it
+      if (creature.contourData && creature.contourData.points && creature.contourData.points.length > 0) {
+        console.log(`Returning cached contour data for creature ${id}`);
+        return creature.contourData;
+      }
+
+      // Generate contour data from image
+      console.log(`Generating contour data for creature ${id} from image: ${creature.imageUrl}`);
+      
+      // Extract contour from image URL
+      const contourData = await ContourExtractionService.extractContour(creature.imageUrl);
+      console.log(`Contour extracted: ${contourData.points.length} points`);
+
+      // Save contour data to database for future use
+      await CreatureRepository.updateContourData(id, contourData);
+      console.log(`Contour data saved to database for creature ${id}`);
+
+      return contourData;
+    } catch (error) {
+      console.error(`Error generating contour for creature ${id}:`, error);
+      return null;
+    }
   }
 
   /**

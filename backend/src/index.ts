@@ -8,6 +8,7 @@ import { errorHandler } from './middleware/errorHandler';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import authRoutes from './routes/auth';
 import creatureRoutes from './routes/creatures';
+import contourRoutes from './routes/contour';
 import StorageService from './services/StorageService';
 
 dotenv.config();
@@ -40,6 +41,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/creatures', creatureRoutes);
+app.use('/api/contour', contourRoutes);
 
 // WebSocket connection handling
 io.on('connection', (socket) => {

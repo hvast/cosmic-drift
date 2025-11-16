@@ -41,8 +41,8 @@ const CreatureProfileCard: React.FC<CreatureProfileCardProps> = ({
   });
   const [emotionValue, setEmotionValue] = useState(profile.emotionValue || 50);
 
-  const [speciesOptions, setSpeciesOptions] = useState<string[]>(getStoredOptions('creature_species'));
-  const [habitatOptions, setHabitatOptions] = useState<string[]>(getStoredOptions('creature_habitats'));
+  const [speciesOptions] = useState<string[]>(getStoredOptions('creature_species'));
+  const [habitatOptions] = useState<string[]>(getStoredOptions('creature_habitats'));
   const [newPersonalityTrait, setNewPersonalityTrait] = useState('');
   const [validationError, setValidationError] = useState<string>('');
 

@@ -13,9 +13,9 @@ class CreatureRepository {
     const insertQuery = `
       INSERT INTO creatures (
         id, name, species, personality, habitat, backstory,
-        image_url, creator_id, emotion_value, status
+        image_url, creator_id, emotion_value, status, contour_data
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     `;
 
     const values = [
@@ -29,6 +29,7 @@ class CreatureRepository {
       data.creatorId,
       data.emotionValue || 50,
       'drifting',
+      data.contourData ? JSON.stringify(data.contourData) : null,
     ];
 
     await query(insertQuery, values);
@@ -39,6 +40,7 @@ class CreatureRepository {
         id, name, species, personality, habitat, backstory,
         image_url as imageUrl, creator_id as creatorId,
         adopter_id as adopterId, status, emotion_value as emotionValue,
+        contour_data as contourData,
         created_at as createdAt, adopted_at as adoptedAt
       FROM creatures
       WHERE id = $1
@@ -52,6 +54,9 @@ class CreatureRepository {
       personality: typeof row.personality === 'string'
         ? JSON.parse(row.personality)
         : row.personality,
+      contourData: row.contourData && typeof row.contourData === 'string'
+        ? JSON.parse(row.contourData)
+        : row.contourData,
     };
   }
 
@@ -64,6 +69,7 @@ class CreatureRepository {
         id, name, species, personality, habitat, backstory,
         image_url as imageUrl, creator_id as creatorId,
         adopter_id as adopterId, status, emotion_value as emotionValue,
+        contour_data as contourData,
         created_at as createdAt, adopted_at as adoptedAt
       FROM creatures
       WHERE id = $1
@@ -81,6 +87,9 @@ class CreatureRepository {
       personality: typeof row.personality === 'string'
         ? JSON.parse(row.personality)
         : row.personality,
+      contourData: row.contourData && typeof row.contourData === 'string'
+        ? JSON.parse(row.contourData)
+        : row.contourData,
     };
   }
 
@@ -95,6 +104,7 @@ class CreatureRepository {
           id, name, species, personality, habitat, backstory,
           image_url as imageUrl, creator_id as creatorId,
           adopter_id as adopterId, status, emotion_value as emotionValue,
+          contour_data as contourData,
           created_at as createdAt, adopted_at as adoptedAt
         FROM creatures
         WHERE creator_id IS NULL
@@ -108,6 +118,9 @@ class CreatureRepository {
         personality: typeof row.personality === 'string'
           ? JSON.parse(row.personality)
           : row.personality,
+        contourData: row.contourData && typeof row.contourData === 'string'
+          ? JSON.parse(row.contourData)
+          : row.contourData,
       }));
     }
 
@@ -116,6 +129,7 @@ class CreatureRepository {
         id, name, species, personality, habitat, backstory,
         image_url as imageUrl, creator_id as creatorId,
         adopter_id as adopterId, status, emotion_value as emotionValue,
+        contour_data as contourData,
         created_at as createdAt, adopted_at as adoptedAt
       FROM creatures
       WHERE creator_id = $1
@@ -129,6 +143,9 @@ class CreatureRepository {
       personality: typeof row.personality === 'string'
         ? JSON.parse(row.personality)
         : row.personality,
+      contourData: row.contourData && typeof row.contourData === 'string'
+        ? JSON.parse(row.contourData)
+        : row.contourData,
     }));
   }
 
@@ -141,6 +158,7 @@ class CreatureRepository {
         id, name, species, personality, habitat, backstory,
         image_url as imageUrl, creator_id as creatorId,
         adopter_id as adopterId, status, emotion_value as emotionValue,
+        contour_data as contourData,
         created_at as createdAt, adopted_at as adoptedAt
       FROM creatures
       WHERE status = 'drifting'
@@ -155,6 +173,9 @@ class CreatureRepository {
       personality: typeof row.personality === 'string'
         ? JSON.parse(row.personality)
         : row.personality,
+      contourData: row.contourData && typeof row.contourData === 'string'
+        ? JSON.parse(row.contourData)
+        : row.contourData,
     }));
   }
 
@@ -236,6 +257,20 @@ class CreatureRepository {
 
     const result = await query(countQuery, values);
     return parseInt(result.rows[0].count, 10);
+  }
+
+  /**
+   * Update contour data for a creature
+   */
+  async updateContourData(id: string, contourData: any): Promise<boolean> {
+    const updateQuery = `
+      UPDATE creatures
+      SET contour_data = $1
+      WHERE id = $2
+    `;
+
+    const result = await query(updateQuery, [JSON.stringify(contourData), id]);
+    return result.rowCount !== null && result.rowCount > 0;
   }
 }
 

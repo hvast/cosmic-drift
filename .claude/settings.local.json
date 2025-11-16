@@ -9,7 +9,13 @@
       "Bash(npm run dev:*)",
       "Bash(curl:*)",
       "Bash(taskkill:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(node check-contour-data.js:*)",
+      "Bash(node clear-contour-data.js:*)",
+      "Bash(nul)",
+      "Bash(node visualize-contour.js:*)",
+      "Bash(node test-new-algorithm.js:*)"
     ],
     "deny": [],
     "ask": []

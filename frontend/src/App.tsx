@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage';
 import GalaxyPage from './pages/GalaxyPage';
 import CreatePage from './pages/CreatePage';
 import ChatPage from './pages/ChatPage';
+import ParticleDemo from './pages/ParticleDemo';
 
 const App: React.FC = () => {
   return (
@@ -43,6 +44,14 @@ const App: React.FC = () => {
                 <ProtectedRoute>
                   <ChatPage />
                 </ProtectedRoute>
+              </Layout>
+            }
+          />
+          <Route
+            path="/particle-demo"
+            element={
+              <Layout>
+                <ParticleDemo />
               </Layout>
             }
           />

@@ -191,6 +191,28 @@ class CreatureController {
       }
     }
   }
+
+  /**
+   * Get or generate contour data for a creature
+   * GET /api/creatures/:id/contour
+   */
+  async getContour(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+
+      const contourData = await CreatureService.getOrGenerateContour(id);
+
+      if (!contourData) {
+        res.status(404).json({ error: 'Creature not found or contour generation failed' });
+        return;
+      }
+
+      res.json(contourData);
+    } catch (error) {
+      console.error('Error in get contour:', error);
+      res.status(500).json({ error: 'Failed to get contour data' });
+    }
+  }
 }
 
 export default new CreatureController();

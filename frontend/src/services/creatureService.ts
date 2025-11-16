@@ -62,6 +62,15 @@ export const creatureService = {
     // TEMPORARILY DISABLED AUTH FOR TESTING
     await api.delete<void>(`/api/creatures/${id}`, false);
   },
+
+  /**
+   * Get contour data for a creature (if not already loaded)
+   * This is useful for lazy loading contour data
+   */
+  async getCreatureContour(id: string): Promise<{ contourData: any }> {
+    const creature = await this.getCreatureById(id);
+    return { contourData: creature.contourData };
+  },
 };
 
 export default creatureService;

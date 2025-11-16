@@ -10,6 +10,16 @@ export interface SuggestedProfile {
   habitat: string;
 }
 
+export interface Vector2 {
+  x: number;
+  y: number;
+}
+
+export interface ContourData {
+  points: Vector2[];
+  version?: string;
+}
+
 export interface CreatureProfile {
   id: string;
   name: string;
@@ -24,6 +34,7 @@ export interface CreatureProfile {
   emotionValue: number;
   createdAt: string;
   adoptedAt?: string;
+  contourData?: ContourData;
 }
 
 export interface CreatureCreationRequest {

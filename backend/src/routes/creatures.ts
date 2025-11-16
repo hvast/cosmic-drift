@@ -8,6 +8,8 @@ const router = Router();
 // Public routes
 router.get('/', CreatureController.getAll.bind(CreatureController));
 router.get('/random', CreatureController.getRandom.bind(CreatureController));
+// IMPORTANT: More specific routes must come before generic /:id route
+router.get('/:id/contour', CreatureController.getContour.bind(CreatureController));
 router.get('/:id', CreatureController.getById.bind(CreatureController));
 
 // Protected routes - TEMPORARILY DISABLED AUTH FOR TESTING

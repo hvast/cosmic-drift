@@ -21,7 +21,7 @@ const CreatureCanvas: React.FC<CreatureCanvasProps> = ({
   const [brushColor, setBrushColor] = useState('#000000');
   const [brushSize, setBrushSize] = useState(5);
   const [isEraser, setIsEraser] = useState(false);
-  const [hasDrawn, setHasDrawn] = useState(false);
+  const [, setHasDrawn] = useState(false);
 
   // Initialize canvas
   useEffect(() => {

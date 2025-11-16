@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GalaxyScene from '../components/GalaxyScene';
-import ProfileCardOverlay from '../components/ProfileCardOverlay';
+import CreatureInfoPanel from '../components/CreatureInfoPanel';
 import RandomEncounter from '../components/RandomEncounter';
 import { CreatureProfile } from '../types/creature';
 import creatureService from '../services/creatureService';
@@ -131,9 +131,9 @@ const GalaxyPage: React.FC = () => {
         )}
       </div>
 
-      {/* Profile Card Overlay */}
+      {/* Creature Info Panel with Particle Outline */}
       {selectedCreature && (
-        <ProfileCardOverlay
+        <CreatureInfoPanel
           creature={selectedCreature}
           onClose={handleCloseProfile}
           onStartChat={handleStartChat}
