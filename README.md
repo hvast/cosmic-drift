@@ -2,6 +2,13 @@
 
 > 一个由用户亲手绘制、AI赋予生命的数字生物宇宙。它们在星海中漂流、互动、选择被谁理解——而非被谁拥有。
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.0-61dafb)](https://reactjs.org/)
+
+**项目状态**：🚧 开发中 | **当前版本**：v0.2.0-alpha
+
 ## 📖 项目简介
 
 星际漂流计划（Cosmic Drift）是一个数字生命共创与连接平台，面向热爱创造与共感的年轻人群体。结合 AI 生成、社交互动与视觉艺术，构建一个可浏览、可对话、可被选择的虚拟生命生态。
@@ -20,20 +27,32 @@
 
 - Node.js 18+
 - MySQL 8.0+
-- Redis 6+ (可选)
 - OpenAI API Key (可选，用于 AI 功能)
 
-### 一键启动
+### 5 分钟启动
 
 ```bash
-# Windows 用户：双击运行
-scripts\快速启动.bat
+# 1. 安装依赖
+cd backend && npm install
+cd ../frontend && npm install
 
-# 或使用命令行
-npm run dev
+# 2. 配置环境变量
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+# 编辑 .env 文件，配置数据库
+
+# 3. 初始化数据库
+cd backend && npm run migrate
+
+# 4. 启动服务
+# 终端 1
+cd backend && npm run dev
+
+# 终端 2
+cd frontend && npm start
 ```
 
-详细启动指南请查看 [快速启动指南](./docs/快速启动指南.md)
+**详细指南**：[QUICK-START.md](./QUICK-START.md) | [PROJECT-HANDOVER.md](./PROJECT-HANDOVER.md)
 
 ## 📁 项目结构
 
@@ -119,10 +138,9 @@ cosmic-drift/
 
 ### 后端
 - Node.js + Express + TypeScript
-- PostgreSQL (关系数据库)
-- Redis (缓存、会话)
-- Socket.io (WebSocket)
-- Bull (任务队列)
+- MySQL 8.0 (关系数据库)
+- Socket.io (WebSocket，计划中)
+- Bull (任务队列，计划中)
 
 ### AI 服务
 - OpenAI GPT-4 (对话生成、档案生成)
@@ -130,13 +148,22 @@ cosmic-drift/
 
 ## 📚 文档
 
-- [快速启动指南](./docs/快速启动指南.md) - 如何启动项目
-- [生物模块文档](./docs/生物模块文档.md) - 生物创建模块详细说明
-- [后端 API 文档](./backend/README.md) - API 接口文档
-- [认证系统文档](./backend/README_AUTH.md) - 认证系统说明
+### 快速入门
+- [⚡ 快速启动指南](./QUICK-START.md) - 5 分钟启动项目
+- [📋 项目交接文档](./PROJECT-HANDOVER.md) - 完整项目说明
+- [🛠️ 开发指南](./DEVELOPMENT-GUIDE.md) - 开发规范和最佳实践
+
+### API 文档
+- [后端 API 文档](./backend/README.md) - API 接口说明
+- [认证系统文档](./backend/README_AUTH.md) - 用户认证系统
+
+### 规格文档
 - [需求文档](./.kiro/specs/cosmic-drift/requirements.md) - 完整需求规格
 - [设计文档](./.kiro/specs/cosmic-drift/design.md) - 系统设计文档
 - [任务列表](./.kiro/specs/cosmic-drift/tasks.md) - 开发任务清单
+
+### 历史文档
+- [开发历史归档](./docs/archive/) - 开发过程中的临时文档
 
 ## 🎯 产品目标
 

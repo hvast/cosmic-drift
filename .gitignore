@@ -38,3 +38,15 @@ coverage/
 
 # Misc
 .cache/
+
+# Uploads (user generated content)
+backend/uploads/creatures/
+backend/uploads/temp/
+
+# Debug files
+backend/debug-*.png
+backend/tools/debug-*.png
+
+# Temporary directories
+delete/
+temp/
