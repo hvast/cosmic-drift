@@ -5,7 +5,7 @@
 ### 1. 克隆项目
 ```bash
 git clone <repository-url>
-cd cosmic-drift
+cd cosmicDrift
 ```
 
 ### 2. 安装依赖

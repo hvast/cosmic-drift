@@ -57,7 +57,7 @@ cd frontend && npm start
 ## 📁 项目结构
 
 ```
-cosmic-drift/
+cosmicDrift/
 ├── frontend/              # React 前端应用
 │   ├── src/
 │   │   ├── components/   # React 组件

@@ -1,6 +1,6 @@
 {
-  "name": "cosmic-drift",
-  "version": "0.1.0",
+  "name": "cosmicDrift",
+  "version": "0.2.0",
   "description": "星际漂流计划 - 数字生命共创与连接平台",
   "private": true,
   "scripts": {

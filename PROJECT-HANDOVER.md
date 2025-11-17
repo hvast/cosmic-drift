@@ -89,7 +89,7 @@ npm start
 ## 📁 项目结构
 
 ```
-cosmic-drift/
+cosmicDrift/
 ├── frontend/              # React 前端
 │   ├── src/
 │   │   ├── components/   # 可复用组件

@@ -1,6 +1,6 @@
 {
-  "name": "cosmic-drift-backend",
-  "version": "0.1.0",
+  "name": "cosmicDrift-backend",
+  "version": "0.2.0",
   "description": "Backend API for Cosmic Drift platform",
   "main": "dist/index.js",
   "scripts": {

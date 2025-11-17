@@ -5,7 +5,7 @@
 ### 步骤 1：克隆项目
 ```bash
 git clone <repository-url>
-cd cosmic-drift
+cd cosmicDrift
 ```
 
 ### 步骤 2：安装依赖
@@ -32,7 +32,7 @@ mysql -u root -p
 ```
 
 ```sql
-CREATE DATABASE cosmic_drift;
+CREATE DATABASE cosmicDrift;
 EXIT;
 ```
 
@@ -51,7 +51,7 @@ DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=你的MySQL密码
-DB_NAME=cosmic_drift
+DB_NAME=cosmicDrift
 
 # JWT 配置（必填）
 JWT_SECRET=your-secret-key-change-in-production
