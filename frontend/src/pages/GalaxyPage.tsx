@@ -78,7 +78,7 @@ const GalaxyPage: React.FC = () => {
             探索宇宙中漂流的数字生命 · 已加载 {creatures.length} / {totalCreatures}
           </p>
           <p className="text-gray-500 text-xs mt-1">
-            💡 拖动旋转视角 · Ctrl+滚轮缩放 · 点击生物查看详情
+            💡 左键拖动旋转 · 右键拖动平移 · 滚轮缩放 · 点击生物查看详情
           </p>
         </div>
         <div className="flex items-center space-x-4">
