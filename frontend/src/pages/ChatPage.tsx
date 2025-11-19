@@ -50,21 +50,39 @@ const ChatPage: React.FC = () => {
   const handleSendMessage = async (content: string) => {
     if (!creatureId) return;
 
+    // 立即显示用户消息（乐观更新）
+    const tempUserMessage: Message = {
+      id: `temp-${Date.now()}`,
+      conversationId: '',
+      senderId: 'user',
+      senderType: 'user',
+      content,
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, tempUserMessage]);
+    setIsLoading(true);
+
     try {
-      setIsLoading(true);
-      
       const response = await conversationService.sendMessage({
         creatureId,
         content
       });
 
-      // 添加用户消息和AI回复到列表
-      setMessages(prev => [...prev, response.userMessage, response.creatureMessage]);
+      // 替换临时消息为真实消息，并添加AI回复
+      setMessages(prev => {
+        const withoutTemp = prev.filter(m => m.id !== tempUserMessage.id);
+        return [...withoutTemp, response.userMessage, response.creatureMessage];
+      });
       
       // 更新情绪值
       setEmotionValue(response.emotionValue);
     } catch (err: any) {
       console.error('Failed to send message:', err);
+      
+      // 发送失败，移除临时消息
+      setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id));
+      
       alert(err.response?.data?.error || '发送失败，请重试');
     } finally {
       setIsLoading(false);
@@ -116,6 +134,7 @@ const ChatPage: React.FC = () => {
         emotionValue={emotionValue}
         onSendMessage={handleSendMessage}
         isLoading={isLoading}
+        onBack={() => navigate(-1)}
       />
     </div>
   );

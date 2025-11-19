@@ -10,6 +10,7 @@ interface ChatInterfaceProps {
   emotionValue: number;
   onSendMessage: (content: string) => Promise<void>;
   isLoading: boolean;
+  onBack?: () => void;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -18,7 +19,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   messages,
   emotionValue,
   onSendMessage,
-  isLoading
+  isLoading,
+  onBack
 }) => {
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -53,6 +55,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     <div className="flex flex-col h-full bg-gradient-to-b from-gray-900 to-black">
       {/* 头部 - 生物信息 */}
       <div className="flex items-center gap-4 p-6 border-b border-white/10 bg-black/30 backdrop-blur-sm">
+        {/* 返回按钮 */}
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="p-2 hover:bg-white/10 rounded-full transition-colors group"
+            aria-label="返回"
+          >
+            <svg 
+              className="w-6 h-6 text-white/60 group-hover:text-white transition-colors" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+        
         <img
           src={creatureImage}
           alt={creatureName}
