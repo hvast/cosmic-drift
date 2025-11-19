@@ -82,8 +82,8 @@ class ContourExtractionService {
 
       console.log(`🔍 Extracted ${rawPoints.length} raw contour points`);
 
-      // Check if we have enough points
-      if (rawPoints.length < 50) {
+      // Check if we have enough points (lowered to 4 since we use convex hull + interpolation)
+      if (rawPoints.length < 4) {
         console.warn(`⚠️  Too few contour points (${rawPoints.length}), using default contour`);
         return this.getDefaultCircleContour();
       }
@@ -138,16 +138,12 @@ class ContourExtractionService {
     const height = canvas.height;
 
     // Check if image has transparency
-    let hasTransparency = false;
     let transparentPixels = 0;
     const alphaThreshold = 50;
 
     for (let i = 3; i < data.length; i += 4) {
       if (data[i] < 200) {
         transparentPixels++;
-        if (data[i] < alphaThreshold) {
-          hasTransparency = true;
-        }
       }
     }
 
@@ -484,42 +480,86 @@ class ContourExtractionService {
   }
 
   /**
-   * Find all contours in binary image using boundary following
+   * Find all contours in binary image
+   * IMPROVED APPROACH: Sort all boundary pixels by angle to preserve shape details
+   * This works better for complex shapes and preserves concave features
    * @param binary - Binary image (255 = foreground, 0 = background)
    * @param width - Image width
    * @param height - Image height
    * @returns ContourPoint[][] - Array of contours
    */
   private findContours(binary: Uint8ClampedArray, width: number, height: number): ContourPoint[][] {
-    const contours: ContourPoint[][] = [];
-    const visited = new Uint8ClampedArray(width * height);
+    // Collect all boundary pixels
+    const boundaryPixels: ContourPoint[] = [];
 
-    // Scan for contour starting points
     for (let y = 1; y < height - 1; y++) {
       for (let x = 1; x < width - 1; x++) {
         const idx = y * width + x;
 
         // Check if this is a boundary pixel (foreground with at least one background neighbor)
-        if (binary[idx] === 255 && visited[idx] === 0) {
+        if (binary[idx] === 255) {
           const isBoundary = this.isBoundaryPixel(binary, x, y, width, height);
 
           if (isBoundary) {
-            // Trace contour from this point
-            const contour = this.traceContourFrom(binary, visited, x, y, width, height);
-
-            // Only keep contours with enough points
-            if (contour.length > 20) {
-              contours.push(contour);
-            }
+            boundaryPixels.push({ x, y });
           }
         }
       }
     }
 
-    // Sort contours by length (largest first)
-    contours.sort((a, b) => b.length - a.length);
+    console.log(`   📍 Found ${boundaryPixels.length} total boundary pixels`);
 
-    return contours;
+    if (boundaryPixels.length < 20) {
+      return [];
+    }
+
+    // Sort boundary pixels by angle from center
+    // This creates a star-shaped contour that preserves concave features
+    const sortedPixels = this.sortPixelsByAngle(boundaryPixels);
+
+    console.log(`   ⭐ Sorted ${sortedPixels.length} pixels by angle`);
+
+    // Return sorted pixels as single contour
+    return [sortedPixels];
+  }
+
+  /**
+   * Sort pixels by angle from center point
+   * This creates a continuous contour that follows the shape
+   * @param pixels - Boundary pixels
+   * @returns ContourPoint[] - Sorted pixels
+   */
+  private sortPixelsByAngle(pixels: ContourPoint[]): ContourPoint[] {
+    if (pixels.length === 0) {
+      return [];
+    }
+
+    // Find center point
+    let sumX = 0;
+    let sumY = 0;
+    for (const p of pixels) {
+      sumX += p.x;
+      sumY += p.y;
+    }
+    const centerX = sumX / pixels.length;
+    const centerY = sumY / pixels.length;
+
+    // Sort by angle and distance from center
+    return pixels
+      .map(p => ({
+        point: p,
+        angle: Math.atan2(p.y - centerY, p.x - centerX),
+        dist: Math.sqrt(Math.pow(p.x - centerX, 2) + Math.pow(p.y - centerY, 2))
+      }))
+      .sort((a, b) => {
+        // Sort by angle first
+        if (Math.abs(a.angle - b.angle) > 1e-6) {
+          return a.angle - b.angle;
+        }
+        // If same angle, use the farthest point (outer boundary)
+        return b.dist - a.dist;
+      })
+      .map(item => item.point);
   }
 
   /**
@@ -545,89 +585,75 @@ class ContourExtractionService {
     return false;
   }
 
+
   /**
-   * Trace contour from starting point using Moore neighborhood
-   * @param binary - Binary image
-   * @param visited - Visited pixels map
-   * @param startX - Starting X coordinate
-   * @param startY - Starting Y coordinate
-   * @param width - Image width
-   * @param height - Image height
-   * @returns ContourPoint[] - Traced contour points
+   * Compute convex hull using Graham Scan algorithm
+   * Returns points in counter-clockwise order
+   * @param points - Input points
+   * @returns ContourPoint[] - Convex hull points
    */
-  private traceContourFrom(
-    binary: Uint8ClampedArray,
-    visited: Uint8ClampedArray,
-    startX: number,
-    startY: number,
-    width: number,
-    height: number
-  ): ContourPoint[] {
-    const contourPoints: ContourPoint[] = [];
+  private convexHull(points: ContourPoint[]): ContourPoint[] {
+    if (points.length < 3) {
+      return points;
+    }
 
-    // Moore neighborhood (8-connected) - clockwise order
-    const directions = [
-      { dx: 1, dy: 0 },   // Right
-      { dx: 1, dy: 1 },   // Bottom-right
-      { dx: 0, dy: 1 },   // Bottom
-      { dx: -1, dy: 1 },  // Bottom-left
-      { dx: -1, dy: 0 },  // Left
-      { dx: -1, dy: -1 }, // Top-left
-      { dx: 0, dy: -1 },  // Top
-      { dx: 1, dy: -1 }   // Top-right
-    ];
-
-    let currentX = startX;
-    let currentY = startY;
-    let directionIndex = 0;
-    const maxPoints = 2000; // Prevent infinite loops
-
-    // Trace contour
-    do {
-      const idx = currentY * width + currentX;
-
-      if (visited[idx] === 1) {
-        // Already visited, complete the loop
-        break;
+    // Find the point with lowest y coordinate (bottom-most)
+    // If tied, choose leftmost
+    let lowestIdx = 0;
+    for (let i = 1; i < points.length; i++) {
+      if (points[i].y > points[lowestIdx].y ||
+          (points[i].y === points[lowestIdx].y && points[i].x < points[lowestIdx].x)) {
+        lowestIdx = i;
       }
+    }
 
-      visited[idx] = 1;
-      contourPoints.push({ x: currentX, y: currentY });
+    const pivot = points[lowestIdx];
 
-      // Find next boundary pixel
-      let found = false;
-      for (let i = 0; i < directions.length; i++) {
-        const checkDir = (directionIndex + i) % directions.length;
-        const dir = directions[checkDir];
-        const nextX = currentX + dir.dx;
-        const nextY = currentY + dir.dy;
+    // Sort points by polar angle with respect to pivot
+    const sortedPoints = points
+      .filter((p, idx) => idx !== lowestIdx)
+      .map(p => ({
+        point: p,
+        angle: Math.atan2(p.y - pivot.y, p.x - pivot.x),
+        dist: Math.sqrt(Math.pow(p.x - pivot.x, 2) + Math.pow(p.y - pivot.y, 2))
+      }))
+      .sort((a, b) => {
+        if (Math.abs(a.angle - b.angle) < 1e-9) {
+          return a.dist - b.dist; // If same angle, closer point first
+        }
+        return a.angle - b.angle;
+      })
+      .map(item => item.point);
 
-        if (nextX >= 0 && nextX < width && nextY >= 0 && nextY < height) {
-          const nextIdx = nextY * width + nextX;
+    // Graham scan
+    const hull: ContourPoint[] = [pivot];
 
-          if (binary[nextIdx] === 255 && this.isBoundaryPixel(binary, nextX, nextY, width, height)) {
-            currentX = nextX;
-            currentY = nextY;
-            directionIndex = checkDir;
-            found = true;
-            break;
-          }
+    for (const point of sortedPoints) {
+      // Remove points that make clockwise turn
+      while (hull.length >= 2) {
+        const p1 = hull[hull.length - 2];
+        const p2 = hull[hull.length - 1];
+        const cross = this.crossProduct(p1, p2, point);
+
+        if (cross <= 0) {
+          hull.pop(); // Clockwise or collinear, remove
+        } else {
+          break; // Counter-clockwise, keep
         }
       }
 
-      if (!found) {
-        // No more boundary pixels found
-        break;
-      }
+      hull.push(point);
+    }
 
-      // Check if we returned to start
-      if (contourPoints.length > 10 && currentX === startX && currentY === startY) {
-        break;
-      }
+    return hull;
+  }
 
-    } while (contourPoints.length < maxPoints);
-
-    return contourPoints;
+  /**
+   * Calculate cross product for three points
+   * Positive = counter-clockwise, Negative = clockwise, Zero = collinear
+   */
+  private crossProduct(p1: ContourPoint, p2: ContourPoint, p3: ContourPoint): number {
+    return (p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x);
   }
 
   /**

@@ -15,7 +15,8 @@
       "Bash(node clear-contour-data.js:*)",
       "Bash(nul)",
       "Bash(node visualize-contour.js:*)",
-      "Bash(node test-new-algorithm.js:*)"
+      "Bash(node test-new-algorithm.js:*)",
+      "Bash(node tools/clear-contour-data.js:*)"
     ],
     "deny": [],
     "ask": []
