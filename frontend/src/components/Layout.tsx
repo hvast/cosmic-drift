@@ -8,9 +8,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-cosmic-dark">
       <nav className="border-b border-gray-800 bg-cosmic-dark/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
+        <div className="px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-cosmic-purple to-cosmic-pink bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-cosmic-purple to-cosmic-pink bg-clip-text text-transparent">
               Cosmic Drift
             </h1>
             <div className="flex gap-6">

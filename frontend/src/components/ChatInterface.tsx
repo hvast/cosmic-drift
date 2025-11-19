@@ -79,7 +79,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           className="w-16 h-16 rounded-full object-cover ring-2 ring-white/20"
         />
         <div className="flex-1">
-          <h2 className="text-2xl font-light text-white">{creatureName}</h2>
+          <h2 className="text-xl font-light text-white">{creatureName}</h2>
           <div className="flex items-center gap-2 mt-1">
             <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
               <motion.div

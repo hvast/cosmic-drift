@@ -73,7 +73,7 @@ const GalaxyPage: React.FC = () => {
     <div className="flex flex-col h-screen bg-gray-900">
       <div className="px-6 py-4 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
         <div className="flex-1">
-          <h2 className="text-3xl font-bold text-white">星际漂流</h2>
+          <h2 className="text-2xl font-bold text-white">星际漂流</h2>
           <p className="text-gray-400 text-sm mt-1">
             探索宇宙中漂流的数字生命 · 已加载 {creatures.length} / {totalCreatures}
           </p>

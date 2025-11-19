@@ -61,7 +61,7 @@ const ConversationsPage: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-4xl font-light text-white mb-2">我的对话</h1>
+          <h1 className="text-2xl font-light text-white mb-2">我的对话</h1>
           <p className="text-white/60">与数字生命的连接记录</p>
         </motion.div>
 
