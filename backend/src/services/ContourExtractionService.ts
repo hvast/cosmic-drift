@@ -513,53 +513,67 @@ class ContourExtractionService {
       return [];
     }
 
-    // Sort boundary pixels by angle from center
-    // This creates a star-shaped contour that preserves concave features
-    const sortedPixels = this.sortPixelsByAngle(boundaryPixels);
+    // Use nearest neighbor algorithm to connect boundary pixels
+    // This preserves both inner and outer contours of line drawings
+    const connectedPixels = this.connectByNearestNeighbor(boundaryPixels);
 
-    console.log(`   ⭐ Sorted ${sortedPixels.length} pixels by angle`);
+    console.log(`   🔗 Connected ${connectedPixels.length} pixels by nearest neighbor`);
 
-    // Return sorted pixels as single contour
-    return [sortedPixels];
+    // Return connected pixels as single contour
+    return [connectedPixels];
   }
 
   /**
-   * Sort pixels by angle from center point
-   * This creates a continuous contour that follows the shape
+   * Connect pixels using nearest neighbor algorithm
+   * This creates a path that follows the actual boundary lines
    * @param pixels - Boundary pixels
-   * @returns ContourPoint[] - Sorted pixels
+   * @returns ContourPoint[] - Connected pixels
    */
-  private sortPixelsByAngle(pixels: ContourPoint[]): ContourPoint[] {
+  private connectByNearestNeighbor(pixels: ContourPoint[]): ContourPoint[] {
     if (pixels.length === 0) {
       return [];
     }
 
-    // Find center point
-    let sumX = 0;
-    let sumY = 0;
-    for (const p of pixels) {
-      sumX += p.x;
-      sumY += p.y;
-    }
-    const centerX = sumX / pixels.length;
-    const centerY = sumY / pixels.length;
+    const remaining = new Set(pixels.map((_, i) => i));
+    const result: ContourPoint[] = [];
 
-    // Sort by angle and distance from center
-    return pixels
-      .map(p => ({
-        point: p,
-        angle: Math.atan2(p.y - centerY, p.x - centerX),
-        dist: Math.sqrt(Math.pow(p.x - centerX, 2) + Math.pow(p.y - centerY, 2))
-      }))
-      .sort((a, b) => {
-        // Sort by angle first
-        if (Math.abs(a.angle - b.angle) > 1e-6) {
-          return a.angle - b.angle;
+    // Start from the top-left pixel
+    let currentIdx = 0;
+    let minVal = Infinity;
+    pixels.forEach((p, i) => {
+      const val = p.y * 10000 + p.x; // Top-left first
+      if (val < minVal) {
+        minVal = val;
+        currentIdx = i;
+      }
+    });
+
+    result.push(pixels[currentIdx]);
+    remaining.delete(currentIdx);
+
+    // Connect by nearest neighbor
+    while (remaining.size > 0) {
+      const current = pixels[currentIdx];
+      let nearestIdx = -1;
+      let nearestDist = Infinity;
+
+      for (const idx of remaining) {
+        const p = pixels[idx];
+        const dist = Math.pow(p.x - current.x, 2) + Math.pow(p.y - current.y, 2);
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearestIdx = idx;
         }
-        // If same angle, use the farthest point (outer boundary)
-        return b.dist - a.dist;
-      })
-      .map(item => item.point);
+      }
+
+      if (nearestIdx === -1) break;
+
+      result.push(pixels[nearestIdx]);
+      remaining.delete(nearestIdx);
+      currentIdx = nearestIdx;
+    }
+
+    return result;
   }
 
   /**

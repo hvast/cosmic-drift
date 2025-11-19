@@ -105,65 +105,69 @@ const ParticleOutlineViewer: React.FC<ParticleOutlineViewerProps> = ({
     const originalPositions = new Float32Array(positionAttr.array);
     const originalSizes = new Float32Array(sizeAttr.array);
 
-    // Animation loop with optimized effects
+    // Animation loop
+    // Set to true to enable animations, false for static view
+    const ENABLE_ANIMATION = true;
     let startTime = Date.now();
+
     const animate = () => {
-      const elapsed = (Date.now() - startTime) / 1000;
+      if (ENABLE_ANIMATION) {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const positions = positionAttr.array as Float32Array;
+        const sizes = sizeAttr.array as Float32Array;
+        const numParticles = positions.length / 3;
 
-      const positions = positionAttr.array as Float32Array;
-      const sizes = sizeAttr.array as Float32Array;
-      const numParticles = positions.length / 3;
+        // Gentle rotation for dynamic feel
+        particleSystem.rotation.z = Math.sin(elapsed * animParams.rotationSpeed) * 0.1;
 
-      // Gentle rotation for dynamic feel
-      particleSystem.rotation.z = Math.sin(elapsed * animParams.rotationSpeed) * 0.1;
+        for (let i = 0; i < numParticles; i++) {
+          const i3 = i * 3;
+          const t = i / numParticles; // Normalized position along contour
 
-      for (let i = 0; i < numParticles; i++) {
-        const i3 = i * 3;
-        const t = i / numParticles; // Normalized position along contour
+          // 1. Breathing effect - overall scale pulsation
+          const breathe = 1 + Math.sin(elapsed * animParams.breatheSpeed + t * Math.PI * 2) * animParams.breatheAmplitude;
 
-        // 1. Breathing effect - overall scale pulsation
-        const breathe = 1 + Math.sin(elapsed * animParams.breatheSpeed + t * Math.PI * 2) * animParams.breatheAmplitude;
+          // 2. Flow effect - particles move along contour creating wave motion
+          const flowPhase = (elapsed * animParams.flowSpeed + t) % 1;
+          const flowWave = Math.sin(flowPhase * Math.PI * 2) * animParams.flowAmplitude;
 
-        // 2. Flow effect - particles move along contour creating wave motion
-        const flowPhase = (elapsed * animParams.flowSpeed + t) % 1;
-        const flowWave = Math.sin(flowPhase * Math.PI * 2) * animParams.flowAmplitude;
+          // Calculate tangent direction for flow
+          const nextIdx = ((i + 1) % numParticles) * 3;
+          const tangentX = originalPositions[nextIdx] - originalPositions[i3];
+          const tangentY = originalPositions[nextIdx + 1] - originalPositions[i3 + 1];
+          const tangentLength = Math.sqrt(tangentX * tangentX + tangentY * tangentY) || 1;
+          const normalizedTangentX = tangentX / tangentLength;
+          const normalizedTangentY = tangentY / tangentLength;
 
-        // Calculate tangent direction for flow
-        const nextIdx = ((i + 1) % numParticles) * 3;
-        const tangentX = originalPositions[nextIdx] - originalPositions[i3];
-        const tangentY = originalPositions[nextIdx + 1] - originalPositions[i3 + 1];
-        const tangentLength = Math.sqrt(tangentX * tangentX + tangentY * tangentY) || 1;
-        const normalizedTangentX = tangentX / tangentLength;
-        const normalizedTangentY = tangentY / tangentLength;
+          // 3. Depth wave effect - Z axis variation creating 3D depth
+          const depthPhase = elapsed * animParams.depthWaveSpeed + t * Math.PI * 4;
+          const depthWave = Math.sin(depthPhase) * Math.cos(depthPhase * 0.5) * animParams.depthWaveAmplitude;
 
-        // 3. Depth wave effect - Z axis variation creating 3D depth
-        const depthPhase = elapsed * animParams.depthWaveSpeed + t * Math.PI * 4;
-        const depthWave = Math.sin(depthPhase) * Math.cos(depthPhase * 0.5) * animParams.depthWaveAmplitude;
+          // 4. Spiral effect - slight rotation around center
+          const spiralAngle = t * Math.PI * 2 + elapsed * animParams.flowSpeed * 0.5;
+          const spiralRadius = 0.05 * Math.sin(elapsed * 2 + t * Math.PI * 4);
+          const spiralX = Math.cos(spiralAngle) * spiralRadius;
+          const spiralY = Math.sin(spiralAngle) * spiralRadius;
 
-        // 4. Spiral effect - slight rotation around center
-        const spiralAngle = t * Math.PI * 2 + elapsed * animParams.flowSpeed * 0.5;
-        const spiralRadius = 0.05 * Math.sin(elapsed * 2 + t * Math.PI * 4);
-        const spiralX = Math.cos(spiralAngle) * spiralRadius;
-        const spiralY = Math.sin(spiralAngle) * spiralRadius;
+          // Apply all effects
+          positions[i3] = originalPositions[i3] * breathe
+                         + normalizedTangentX * flowWave
+                         + spiralX;
+          positions[i3 + 1] = originalPositions[i3 + 1] * breathe
+                             + normalizedTangentY * flowWave
+                             + spiralY;
+          positions[i3 + 2] = depthWave;
 
-        // Apply all effects
-        positions[i3] = originalPositions[i3] * breathe
-                       + normalizedTangentX * flowWave
-                       + spiralX;
-        positions[i3 + 1] = originalPositions[i3 + 1] * breathe
-                           + normalizedTangentY * flowWave
-                           + spiralY;
-        positions[i3 + 2] = depthWave;
+          // 5. Pulsate effect - particle size variation with multiple frequencies
+          const pulsate1 = Math.sin(elapsed * animParams.pulsateSpeed + t * Math.PI * 4);
+          const pulsate2 = Math.sin(elapsed * animParams.pulsateSpeed * 1.5 + t * Math.PI * 8);
+          const pulsate = 1 + (pulsate1 * 0.3 + pulsate2 * 0.15) * animParams.pulsateAmplitude;
+          sizes[i] = originalSizes[i] * pulsate;
+        }
 
-        // 5. Pulsate effect - particle size variation with multiple frequencies
-        const pulsate1 = Math.sin(elapsed * animParams.pulsateSpeed + t * Math.PI * 4);
-        const pulsate2 = Math.sin(elapsed * animParams.pulsateSpeed * 1.5 + t * Math.PI * 8);
-        const pulsate = 1 + (pulsate1 * 0.3 + pulsate2 * 0.15) * animParams.pulsateAmplitude;
-        sizes[i] = originalSizes[i] * pulsate;
+        positionAttr.needsUpdate = true;
+        sizeAttr.needsUpdate = true;
       }
-
-      positionAttr.needsUpdate = true;
-      sizeAttr.needsUpdate = true;
 
       renderer.render(scene, camera);
       animationIdRef.current = requestAnimationFrame(animate);
@@ -214,28 +218,29 @@ const ParticleOutlineViewer: React.FC<ParticleOutlineViewerProps> = ({
   }, [contourPoints, color, emotionValue, width, height]);
 
   // Calculate animation parameters based on emotion value (0-100)
+  // REDUCED AMPLITUDES for subtler effect
   const calculateAnimationParams = (emotionValue: number): AnimationParams => {
     const t = emotionValue / 100; // Normalize to 0-1
 
     return {
       // Breathing: slower and subtler for calm, faster for excited
-      breatheSpeed: 0.8 + t * 1.5,
-      breatheAmplitude: 0.05 + t * 0.10,
+      breatheSpeed: 0.5 + t * 0.8,
+      breatheAmplitude: 0.02 + t * 0.03,
 
       // Flow: gentle wave motion along contour
-      flowSpeed: 0.5 + t * 1.2,
-      flowAmplitude: 0.10 + t * 0.20,
+      flowSpeed: 0.3 + t * 0.6,
+      flowAmplitude: 0.03 + t * 0.05,
 
       // Depth wave: 3D effect
-      depthWaveSpeed: 1.0 + t * 2.0,
-      depthWaveAmplitude: 0.6 + t * 1.2,
+      depthWaveSpeed: 0.6 + t * 1.0,
+      depthWaveAmplitude: 0.2 + t * 0.3,
 
       // Pulsate: particle size variation
-      pulsateSpeed: 2.0 + t * 4.0,
-      pulsateAmplitude: 0.20 + t * 0.30,
+      pulsateSpeed: 1.5 + t * 2.0,
+      pulsateAmplitude: 0.08 + t * 0.12,
 
       // Rotation: subtle rotation for dynamics
-      rotationSpeed: 0.2 + t * 0.3,
+      rotationSpeed: 0.1 + t * 0.15,
     };
   };
 
