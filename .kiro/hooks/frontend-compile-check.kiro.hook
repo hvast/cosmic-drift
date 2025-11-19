@@ -1,0 +1,21 @@
+{
+  "enabled": true,
+  "name": "Frontend Compile Check",
+  "description": "Automatically attempts to compile frontend code and resolve any compilation errors whenever frontend files are modified",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "frontend/src/**/*.ts",
+      "frontend/src/**/*.tsx",
+      "frontend/src/**/*.js",
+      "frontend/src/**/*.jsx",
+      "frontend/package.json",
+      "frontend/tsconfig.json"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Frontend files have been modified. Please:\n1. Attempt to compile the frontend code (run npm run build or tsc --noEmit in the frontend directory)\n2. Check for any compilation errors or TypeScript errors\n3. If there are errors, analyze them and propose fixes\n4. Apply the necessary fixes to resolve the compilation errors\n5. Verify that the code compiles successfully after fixes"
+  }
+}

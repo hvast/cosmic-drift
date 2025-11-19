@@ -23,6 +23,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <a href="/create" className="text-gray-300 hover:text-white transition-colors">
                 创建
               </a>
+              <a href="/conversations" className="text-gray-300 hover:text-white transition-colors">
+                对话
+              </a>
             </div>
           </div>
         </div>

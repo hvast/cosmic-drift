@@ -7,22 +7,22 @@ interface ColorAnalysis {
 }
 
 class ImageAnalysisService {
-  private readonly openaiApiKey: string;
+  private readonly qwenApiKey: string;
   private readonly maxRetries: number = 3;
   private readonly retryDelay: number = 1000;
 
   constructor() {
-    this.openaiApiKey = process.env.OPENAI_API_KEY || '';
-    if (!this.openaiApiKey) {
-      console.warn('OPENAI_API_KEY not configured. Image analysis will use fallback mode.');
+    this.qwenApiKey = process.env.QWEN_API_KEY || '';
+    if (!this.qwenApiKey) {
+      console.warn('QWEN_API_KEY not configured. Image analysis will use fallback mode.');
     }
   }
 
   /**
-   * Analyze image using OpenAI Vision API
+   * Analyze image using Qwen Vision API
    */
   async analyzeImage(imageData: string): Promise<AIAnalysisResult> {
-    if (!this.openaiApiKey) {
+    if (!this.qwenApiKey) {
       return this.getFallbackAnalysis();
     }
 
@@ -52,30 +52,30 @@ class ImageAnalysisService {
   }
 
   /**
-   * Extract visual features from image using OpenAI Vision
+   * Extract visual features from image using Qwen Vision
    */
   private async extractVisualFeatures(imageData: string): Promise<VisualFeatures> {
     try {
       const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
+        'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
         {
-          model: 'gpt-4-vision-preview',
+          model: 'qwen-vl-plus', // 通义千问视觉模型
           messages: [
             {
               role: 'user',
               content: [
                 {
                   type: 'text',
-                  text: `Analyze this creature image and provide:
-1. Dominant colors (3-5 hex codes)
-2. Visual style (e.g., "soft and dreamy", "bold and geometric", "organic and flowing")
-3. Complexity score (0-10, where 0 is very simple and 10 is highly detailed)
+                  text: `分析这个生物图像，提供以下信息：
+1. 主要颜色（3-5个十六进制颜色代码）
+2. 视觉风格（例如："柔和梦幻"、"大胆几何"、"有机流动"）
+3. 复杂度评分（0-10，0表示非常简单，10表示高度复杂）
 
-Respond in JSON format:
+请用 JSON 格式回复：
 {
   "dominantColors": ["#hex1", "#hex2", "#hex3"],
-  "style": "description",
-  "complexity": number
+  "style": "风格描述",
+  "complexity": 数字
 }`,
                 },
                 {
@@ -92,7 +92,7 @@ Respond in JSON format:
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.openaiApiKey}`,
+            Authorization: `Bearer ${this.qwenApiKey}`,
           },
           timeout: 30000,
         }
@@ -114,7 +114,7 @@ Respond in JSON format:
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError;
-        console.error('OpenAI API error:', axiosError.response?.data || axiosError.message);
+        console.error('Qwen API error:', axiosError.response?.data || axiosError.message);
       }
       throw error;
     }

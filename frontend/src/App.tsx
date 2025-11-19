@@ -9,6 +9,7 @@ import RegisterPage from './pages/RegisterPage';
 import GalaxyPage from './pages/GalaxyPage';
 import CreatePage from './pages/CreatePage';
 import ChatPage from './pages/ChatPage';
+import ConversationsPage from './pages/ConversationsPage';
 import ParticleDemo from './pages/ParticleDemo';
 
 const App: React.FC = () => {
@@ -43,6 +44,16 @@ const App: React.FC = () => {
               <Layout>
                 <ProtectedRoute>
                   <ChatPage />
+                </ProtectedRoute>
+              </Layout>
+            }
+          />
+          <Route
+            path="/conversations"
+            element={
+              <Layout>
+                <ProtectedRoute>
+                  <ConversationsPage />
                 </ProtectedRoute>
               </Layout>
             }

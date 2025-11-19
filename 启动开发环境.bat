@@ -22,7 +22,7 @@ set /p choice="请输入选项 (0-5): "
 if "%choice%"=="1" (
     echo.
     echo 启动完整开发环境...
-    call scripts\start-dev.bat
+    npm start
 ) else if "%choice%"=="2" (
     echo.
     echo 启动前端开发服务器...
