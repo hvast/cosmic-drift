@@ -10,7 +10,7 @@
 
 1. **角色化AI对话**
    - 基于生物的性格、物种、栖息地和背景故事生成回复
-   - 使用OpenAI GPT-4 API
+   - 使用通义千问 Qwen-Plus API
    - 回复风格符合角色设定，保持诗意和神秘感
 
 2. **情绪系统**
@@ -167,7 +167,7 @@
 
 ### 环境变量
 ```env
-OPENAI_API_KEY=your-openai-api-key
+QWEN_API_KEY=your-qwen-api-key
 ```
 
 ### 数据库迁移

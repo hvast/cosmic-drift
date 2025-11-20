@@ -56,8 +56,8 @@ DB_NAME=cosmicDrift
 # JWT 配置（必填）
 JWT_SECRET=your-secret-key-change-in-production
 
-# OpenAI 配置（可选，不填会使用 fallback）
-OPENAI_API_KEY=sk-your-openai-api-key
+# 通义千问 API 配置（可选，不填会使用 fallback）
+QWEN_API_KEY=sk-your-qwen-api-key
 
 # 服务器配置
 PORT=3001
@@ -179,20 +179,21 @@ mkdir -p backend/uploads/temp
 
 ### 问题 5：AI 功能不工作
 
-**不影响核心功能**！如果没有配置 OpenAI API Key，系统会使用 fallback 数据。
+**不影响核心功能**！如果没有配置通义千问 API Key，系统会使用 fallback 数据。
 
 如需启用 AI：
-1. 获取 OpenAI API Key：https://platform.openai.com/api-keys
-2. 在 `backend/.env` 中设置 `OPENAI_API_KEY`
+1. 获取通义千问 API Key：https://dashscope.console.aliyun.com/apiKey
+2. 在 `backend/.env` 中设置 `QWEN_API_KEY`
 3. 重启后端服务
 
 ---
 
 ## 📚 下一步
 
-- 阅读 [PROJECT-HANDOVER.md](./PROJECT-HANDOVER.md) 了解项目详情
-- 阅读 [DEVELOPMENT-GUIDE.md](./DEVELOPMENT-GUIDE.md) 学习开发规范
-- 查看 [backend/README.md](./backend/README.md) 了解 API 文档
+- 阅读 [项目交接文档](./archive/PROJECT-HANDOVER.md) 了解项目详情
+- 阅读 [开发规范](./开发规范.md) 学习开发规范
+- 查看 [后端 API 文档](../backend/README.md) 了解 API 文档
+- 查看 [对话系统文档](./对话系统文档.md) 了解 AI 对话功能
 
 ---
 

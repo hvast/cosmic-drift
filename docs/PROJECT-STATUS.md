@@ -1,6 +1,6 @@
 # 📊 Cosmic Drift 项目状态
 
-**最后更新**：2024-11-17  
+**最后更新**：2025-11-20  
 **项目版本**：v0.2.0-alpha  
 **项目名称**：cosmicDrift
 
@@ -93,10 +93,16 @@ cosmicDrift/
   - [x] 生物卡片展示
   - [x] 详情查看
   - [x] 粒子效果
+- [x] AI 对话系统
+  - [x] 角色化对话生成
+  - [x] 情绪系统（0-100）
+  - [x] 对话历史记录
+  - [x] 对话列表管理
+  - [x] 沉浸式聊天界面
 
 ### 开发中 🚧
 - [ ] 星际漂流 3D 可视化
-- [ ] 对话互动系统
+- [ ] 契合度计算
 - [ ] 认养机制
 
 ### 计划中 📋
@@ -118,7 +124,7 @@ cosmicDrift/
 ### 后端
 - Node.js + Express + TypeScript
 - MySQL 8.0
-- OpenAI GPT-4 + Vision
+- 通义千问 Qwen-Plus + Qwen-VL-Plus
 - Canvas (图像处理)
 
 ---
@@ -166,28 +172,36 @@ cd backend && npm run dev
 cd frontend && npm start
 ```
 
-详见：[QUICK-START.md](./QUICK-START.md)
+详见：[快速启动指南](./快速启动指南.md)
 
 ---
 
 ## 📚 文档索引
 
 ### 新手入门
-1. [README.md](./README.md) - 项目概览
-2. [QUICK-START.md](./QUICK-START.md) - 快速启动
-3. [PROJECT-HANDOVER.md](./PROJECT-HANDOVER.md) - 完整说明
+1. [README.md](../README.md) - 项目概览
+2. [快速启动指南](./快速启动指南.md) - 快速启动
+3. [项目交接文档](./archive/PROJECT-HANDOVER.md) - 完整说明
 
 ### 开发者
-1. [DEVELOPMENT-GUIDE.md](./DEVELOPMENT-GUIDE.md) - 开发规范
-2. [backend/README.md](./backend/README.md) - API 文档
-3. [backend/README_AUTH.md](./backend/README_AUTH.md) - 认证系统
+1. [开发规范](./开发规范.md) - 开发规范
+2. [项目结构说明](./项目结构说明.md) - 项目结构
+3. [运行和调试指南](./运行和调试指南.md) - 运行说明
+4. [后端 API 文档](../backend/README.md) - API 文档
+5. [认证系统文档](../backend/README_AUTH.md) - 认证系统
+
+### 功能文档
+1. [对话系统文档](./对话系统文档.md) - AI 对话系统
+2. [生物模块文档](./生物模块文档.md) - 生物模块
+3. [API 测试指南](./API测试指南.md) - API 测试
+4. [MySQL 数据库设置](./MySQL数据库设置.md) - 数据库配置
 
 ### 工具和测试
-1. [backend/tools/README.md](./backend/tools/README.md) - 开发工具
-2. [backend/tests/README.md](./backend/tests/README.md) - 测试脚本
+1. [后端工具](../backend/tools/README.md) - 开发工具
+2. [测试脚本](../backend/tests/README.md) - 测试脚本
 
 ### 历史文档
-1. [docs/archive/](./docs/archive/) - 开发历史归档
+1. [开发历史归档](./archive/) - 开发历史归档
 
 ---
 
